@@ -1,0 +1,214 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Elim bootstrap modal - QUnit test</title>
+  <link rel="stylesheet" href="/css/qunit.css">
+</head>
+<body>
+    <div id="qunit"></div>
+    <div id="qunit-fixture"></div>
+    <div class="well" style="margin:10px;"></div>
+    <script src="/lib/qunit.js"></script>
+    <link rel="stylesheet" href="/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/css/bootstrap-responsive.min.css" />
+    <script type="text/javascript" src="/lib/jquery-1.10.1.min.js"></script>
+    <script type="text/javascript" src="/lib/bootstrap.min.js"></script>
+    <script type="text/javascript" src="elim.bootstrap.modal.js"></script>
+    <script>
+        if (!Function.prototype.bind) {
+            Function.prototype.bind = function () {
+                "use strict";
+                var fn = this, args = Array.prototype.slice.call(arguments), object = args.shift();
+                return function () {
+                    return fn.apply(object, args.concat(Array.prototype.slice.call(arguments)));
+                };
+            };
+        }
+
+        module("ElimBox");
+        test("Create Box (Single OK button - with top close X, no animate)", function () {
+            var mBox = new window.elimbox('myid', 'title', 'message', { buttons: 1, showX: true, animate: false });
+
+            equal(mBox.id, "myid", "Check box id is myid");
+            equal($('#myid').length, 1, "Check dom for box div with id myid");
+            equal($('#myid .modal-footer').find('button').length, 1, "Check dom button count");
+            equal(mBox.header.find('button')[0].tagName, 'BUTTON', "Check hash top close button");
+            equal(mBox.el.css('display'), 'none', "Check box display is none");
+
+            mBox.show();
+
+            equal(mBox.el.css('display'), 'block', "Check box display is block");
+
+            mBox.destroy();
+            equal($('#myid').length, 0, "Check box has been removed from the dom");
+        });
+
+        test("Create Box (Single OK button - no top close X, no animate)", function () {
+            var mBox = new window.elimbox('myid2', 'title', 'message', { buttons: 1, showX: false, animate: false });
+
+            equal(mBox.id, "myid2", "Check box id is myid");
+            equal($('#myid2').length, 1, "Check dom for box div with id myid2");
+            equal($('#myid2 .modal-footer').find('button').length, 1, "Check dom button count");
+            equal($('#myid2 .modal-header').find('button').length, 0, "Check dom button count");
+            equal(mBox.el.css('display'), 'none', "Check box display is none");
+
+            mBox.show();
+
+            equal(mBox.el.css('display'), 'block', "Check box display is block");
+
+            mBox.destroy();
+            equal($('#myid2').length, 0, "Check box has been removed from the dom");
+        });
+
+        test("Create Box (Auto ID #1)", function () {
+            var mBox = new window.elimbox('title', 'message', { buttons: 1, showX: false, animate: false });
+
+            equal(mBox.id, "box-1", "Check box id is box-1");
+
+            mBox.destroy();
+            equal($('#box-1').length, 0, "Check box has been removed from the dom");
+        });
+
+        test("Create Box (Auto ID #2)", function () {
+            var mBox = new window.elimbox('title', 'message', { buttons: 1, showX: false, animate: false });
+
+            equal(mBox.id, "box-2", "Check box id is box-2");
+
+            mBox.destroy();
+            equal($('#box-2').length, 0, "Check box has been removed from the dom");
+        });
+
+        test("Create Box (Single OK button - with top close X, with animate)", function () {
+            var mBox = new window.elimbox('myidAnim', 'title', 'message', {
+                buttons: 1, showX: true, animate: true,
+                handlers: {
+                    'shown': [function () {
+                        start();
+                        equal(mBox.el.css('display'), 'block', "Check box display is block");
+                        mBox.hide();
+                        mBox.destroy();
+                        equal($('#myidAnim').length, 0, "Check box has been removed from the dom");
+                    }]
+                }
+            });
+
+            stop();
+
+            equal(mBox.id, "myidAnim", "Check box id is myid");
+            strictEqual(mBox.handlers["shown"].length, 1, "Check handlers['shown'] has 1 cb");
+            equal($('#myidAnim').length, 1, "Check dom for box div with id myid");
+            equal($('#myidAnim .modal-footer').find('button').length, 1, "Check dom button count");
+            equal($('#myidAnim .modal-header').find('button')[0].tagName, 'BUTTON', "Check hash top close button");
+            equal(mBox.el.css('display'), 'none', "Check box display is none");
+
+            mBox.show();
+
+        });
+
+        test("Create Box (Single OK button - with top close X, with animate, then close)", function () {
+            var mBox = new window.elimbox('myidAnim2', 'title', 'message', {
+                buttons: 1, showX: true, animate: true,
+                handlers: {
+                    'shown': [function () {
+                        start();
+                        equal(mBox.el.css('display'), 'block', "Check box display is block");
+                        mBox.hide();
+                    }],
+                    'hidden': [function () {
+                        start();
+                        equal(mBox.el.css('display'), 'none', "Check box display is block");
+                        mBox.destroy();
+                        equal($('#myidAnim').length, 0, "Check box has been removed from the dom");
+                    }]
+                }
+            });
+
+            stop();
+            stop();
+
+            equal(mBox.id, "myidAnim2", "Check box id is myid");
+            equal($('#myidAnim2').length, 1, "Check dom for box div with id myid");
+            equal($('#myidAnim2 .modal-footer').find('button').length, 1, "Check dom button count");
+            equal($('#myidAnim2 .modal-header').find('button')[0].tagName, 'BUTTON', "Check hash top close button");
+            equal(mBox.el.css('display'), 'none', "Check box display is none");
+
+            mBox.show();
+
+        });
+
+        module("elimboxes");
+        test("Create Box (Single OK button - with top close X, no animate)", function () {
+            var mBox = window.elimboxes.dialog('myid-1', 'title', 'message', { buttons: 1, showX: true, animate: false });
+
+            equal(mBox.id, "myid-1", "Check box id is myid");
+            equal($('#myid-1').length, 1, "Check dom for box div with id myid");
+            equal($('#myid-1 .modal-footer').find('button').length, 1, "Check dom button count");
+            equal($('#myid-1 .modal-header').find('button')[0].tagName, 'BUTTON', "Check hash top close button");
+            equal(mBox.el.css('display'), 'none', "Check box display is none");
+
+            mBox.show();
+
+            equal(mBox.el.css('display'), 'block', "Check box display is block");
+
+            mBox.destroy();
+            equal($('#myid-1').length, 0, "Check box has been removed from the dom");
+        });
+
+        test("Create Alert Box", function () {
+            var mBox = window.elimboxes.alert('myid-a1', 'Alert Title', 'alert message', { animate: false });
+            console.log('Alert box - mBox', mBox);
+            equal(mBox.id, "myid-a1", "Check box id is myid-a1");
+            equal($('#myid-a1').length, 1, "Check dom for box div with id myid");
+            equal($('#myid-a1 .modal-footer').find('button').length, 1, "Check dom button count");
+            equal($('#myid-a1 .modal-header').find('button')[0].tagName, 'BUTTON', "Check hash top close button");
+            equal(mBox.el.css('display'), 'none', "Check box display is none");
+
+            mBox.show();
+
+            equal($('#myid-a1').find('button[data-action="ok"]').length, 1, "Has ok button");
+
+            equal(mBox.el.css('display'), 'block', "Check box display is block");
+
+            mBox.destroy();
+            equal($('#myid-a1').length, 0, "Check box has been removed from the dom");
+        });
+
+        module("elimboxes");
+        test("Create Box - Simulate OK click (Auto destroy after click)", function () {
+            var okClickCount = 0, mBox = window.elimboxes.dialog('myid-1', 'title', 'message', {
+                buttons: 1, showX: true, animate: false,
+                handlers: {
+                    'ok': [function (a, b) {
+                        okClickCount++;
+                        start();
+                        equal(okClickCount, 1, "Click event called once");
+                        equal(b, 'ok', "Event arg 'action'  = 'ok'");
+                        return true;
+                    }]
+                }
+            });
+
+            stop();
+
+            equal(mBox.id, "myid-1", "Check box id is myid");
+            equal($('#myid-1').length, 1, "Check dom for box div with id myid");
+            equal($('#myid-1 .modal-footer').find('button').length, 1, "Check dom button count");
+            equal($('#myid-1 .modal-header').find('button')[0].tagName, 'BUTTON', "Check hash top close button");
+            equal(mBox.el.css('display'), 'none', "Check box display is none");
+
+            mBox.show();
+            equal(mBox.el.css('display'), 'block', "Check box display is block");
+
+            mBox.footer.find('button[data-action="ok"]').trigger('click');
+
+            mBox.destroy();
+            equal(mBox.header, null, "Check header is null");
+            equal(mBox.body, null, "Check body is null");
+            equal(mBox.footer, null, "Check footer is null");
+            equal(mBox._destroyed, true, "Check destroyed flag");
+            equal($('#myid-1').length, 0, "Check box has been removed from the dom");
+        });
+    </script>
+</body>
+</html>
