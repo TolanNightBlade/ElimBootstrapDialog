@@ -1,0 +1,44 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+    <link rel="stylesheet" href="/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/css/bootstrap-responsive.min.css" />
+    <script type="text/javascript" src="/lib/jquery-1.10.1.min.js"></script>
+    <script type="text/javascript" src="/lib/bootstrap.min.js"></script>
+    <script type="text/javascript" src="elim.bootstrap.modal.js"></script>
+</head>
+<body>
+    <script>
+        if (!Function.prototype.bind) {
+            Function.prototype.bind = function () {
+                "use strict";
+                var fn = this, args = Array.prototype.slice.call(arguments), object = args.shift();
+                return function () {
+                    return fn.apply(object, args.concat(Array.prototype.slice.call(arguments)));
+                };
+            };
+        }
+
+        var box1, box2;
+        $(document).ready(function () {
+            box1 = new window.elimbox('title', 'messsage', {});
+            console.log('box1', box1);
+            box2 = window.elimboxes.dialog('someid', 'title2', 'messsage2', {
+                buttons: elimboxes.buttons.OkCancel,
+                showX: false,
+                backdrop: false,
+                autoDestroy: true,
+                animate: true,
+                handlers: {
+                    'ok': [function () { alert("OK"); return true; }]
+                }
+            });
+            console.log('box2', box2);
+
+            box1.show();
+            box2.show();
+        });
+    </script>
+</body>
+</html>
