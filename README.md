@@ -1,0 +1,4 @@
+ElimBootstrapDialog
+===================
+
+Bootstrap modal addon
