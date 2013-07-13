@@ -10,8 +10,8 @@
         return '[object ' + kind + ']' === Object.prototype.toString.call(val);
     }
 
-    var currentBoxes = {}, boxId = 0, defaultLocale = 'en', useObjectCreate = typeof Object.create === 'function',
-    txt = {
+    var currentBoxes = {}, boxId = 0, /*defaultLocale = 'en',*/ useObjectCreate = typeof Object.create === 'function',
+    /*txt = {
         'en': {
             'ok': 'Ok',
             'cancel' : 'Cancel',
@@ -21,7 +21,7 @@
             'yes': 'Yes',
             'no' : 'No'
         }
-    }, buttons = {
+    },*/ buttons = {
         Ok: {
             value: 1,
             cssclass: '',
@@ -289,7 +289,7 @@
             return returnValue;
         },
         withButtons: function (btn) {
-            var holder = this.footer, prop;
+            var holder = this.footer;
             holder.empty();
             if (buttons === 0) { return this.hasFooter(false);}
             
