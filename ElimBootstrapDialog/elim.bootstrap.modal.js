@@ -10,7 +10,7 @@
         return '[object ' + kind + ']' === Object.prototype.toString.call(val);
     }
 
-    var currentBoxes = [], boxId = 0, defaultLocale = 'en', useObjectCreate = typeof Object.create === 'function',
+    var currentBoxes = {}, boxId = 0, defaultLocale = 'en', useObjectCreate = typeof Object.create === 'function',
     txt = {
         'en': {
             'ok': 'Ok',
@@ -98,7 +98,7 @@
         buttons: buttons.Ok.value
     },
     AlertBoxDefaults = $.extend({}, BoxDefaults, {
-        icon: 'icon-alert',
+        icon: 'icon-exclamation-sign',
         buttons: buttons.Ok.value,
         autoDestroy: true
     });
@@ -153,8 +153,8 @@
 
         var _args = getArgumentsArray.apply(null, arguments), title = _args[1], message = _args[2], options = _args[3];
 
-        this.id = _args[0];
-        if (!this.id || this.id === '') { this.id = makeId(); }
+        this._id = makeId();
+        this.id = _args[0] || this._id;
 
         this.withOptions(options)
             .withBody(message)
@@ -173,7 +173,7 @@
                 this.destroy();
             }
         }.bind(this));
-
+        
         return this;
     }
 
@@ -206,7 +206,7 @@
             if (showX) {
                 el.append($('<button class="close" data-dismiss="modal" aria-hidden="true">&times;</button>'));
             }
-            el.append($('<h4></h4>'));
+            el.append($('<h4><i style="display:none;"></i><span></span></h4>'));
 
             return this;
         },
@@ -307,12 +307,14 @@
         },
         withTitle: function (str, options) {
             var holder = this.header;
-            holder.find('h4').html(getString(str));
+            holder.find('h4>span').html(getString(str));
             if (options) {
                 if (options.cssclass) {
                     holder.addClass(options.cssclass);
                 }
             }
+            if (this.options.icon) { holder.find('i').attr('class', this.options.icon).show(); }
+            else { holder.find('i').hide();}
             return this;
         },
         hasHeader: function (show) {
@@ -345,23 +347,41 @@
             this.body = null;
             this.el = null;
             this._destroyed = true;
+            currentBoxes[this._id] = null;
+            delete currentBoxes[this._id];
         }
     };
 
     var BoxHandler = function () {};
 
     BoxHandler.prototype = {
+        _reg: function (itm) {
+            currentBoxes[itm._id] = itm;
+        },
+        get: function (id) {
+            var p;
+            for (p in currentBoxes) {
+                if (currentBoxes.hasOwnProperty(p) && currentBoxes[p].id === id) {
+                    return currentBoxes[p];
+                }
+            }
+            return null;
+        },
         alert: function () {
             var _args = getArgumentsArray.apply(null, arguments);
             _args[3] = $.extend({}, AlertBoxDefaults, _args[3]);
             return this.dialog.apply(this, _args);
         },
         dialog: function () {
+            var itm;
             if (useObjectCreate) {
-                return this.dialogObjCreate(arguments);
+                itm = this.dialogObjCreate(arguments);
             } else {
-                return this._dialognoObjCreate(arguments);
+                itm = this._dialognoObjCreate(arguments);
             }
+            
+            this._reg(itm);
+            return itm;
         },
         dialogObjCreate: function (val) {
             var instance = Object.create(Box.prototype);

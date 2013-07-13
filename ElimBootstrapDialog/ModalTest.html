@@ -9,6 +9,21 @@
     <script type="text/javascript" src="elim.bootstrap.modal.js"></script>
 </head>
 <body>
+    <div class="navbar">
+        <div class="navbar-inner">
+            <ul class="nav testing-buttons">
+                <li>
+                    <a data-func="BoxStandard">Default</a>
+                </li>
+                <li>
+                    <a data-func="BoxStandardNoAnim">Default no animate</a>
+                </li>
+                <li>
+                    <a data-func="BoxAlertDefaults">Alert</a>
+                </li>
+            </ul>
+        </div>
+    </div>
     <script>
         if (!Function.prototype.bind) {
             Function.prototype.bind = function () {
@@ -20,8 +35,31 @@
             };
         }
 
-        var box1, box2;
+        var currentBox, f, testingDialogs = function () { }
+        testingDialogs.prototype = {
+            BoxStandard: function () {
+                currentBox = window.elimboxes.dialog('Title', 'message')
+                    .show();
+            },
+            BoxStandardNoAnim: function () {
+                currentBox = window.elimboxes.dialog('Title', 'message', {animate: false})
+                    .show();
+            },
+            BoxAlertDefaults: function () {
+                currentBox = window.elimboxes.alert('Title', 'message')
+                    .show();
+            }
+        };
+
+        f = new testingDialogs();
+
+        var box1, box2, boxAlert;
         $(document).ready(function () {
+            $('.testing-buttons li a').click(function (e) {
+                var el = $(e.target), action = el.attr('data-func');
+                e.preventDefault();
+                f[action]();
+            });
             box1 = new window.elimbox('title', 'messsage', {});
             console.log('box1', box1);
             box2 = window.elimboxes.dialog('someid', 'title2', 'messsage2', {
@@ -34,10 +72,12 @@
                     'ok': [function () { alert("OK"); return true; }]
                 }
             });
-            console.log('box2', box2);
 
-            box1.show();
-            box2.show();
+            boxAlert = window.elimboxes.alert('Title', 'message');
+
+            //box1.show();
+            //box2.show();
+            //boxAlert.show();
         });
     </script>
 </body>
