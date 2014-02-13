@@ -1,4 +1,4 @@
-﻿(function (doc, $) {
+(function (global, $) {
     "use strict";
 
     /*jshint undef:true */
@@ -10,21 +10,17 @@
         return '[object ' + kind + ']' === Object.prototype.toString.call(val);
     }
 
-    var currentBoxes = {}, boxId = 0, /*defaultLocale = 'en',*/ useObjectCreate = typeof Object.create === 'function',
-    /*txt = {
-        'en': {
-            'ok': 'Ok',
-            'cancel' : 'Cancel',
-            'save' : 'Save',
-            'delete' : 'Delete',
-            'confirm': 'Confirm',
-            'yes': 'Yes',
-            'no' : 'No'
-        }
-    },*/ buttons = {
+    function capitaliseFirstLetter(string) {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+    }
+
+    var currentBoxes = {},
+        boxId = 0,
+        useObjectCreate = typeof Object.create === 'function',
+    buttons = {
         Ok: {
             value: 1,
-            cssclass: '',
+            cssclass: 'btn-primary',
             icon: null,
             action: 'ok',
             text: null
@@ -38,50 +34,51 @@
         },
         Yes: {
             value: 4,
-            cssclass: '',
+            cssclass: 'btn-primary',
             icon: null,
             action: 'yes',
             text: null
         },
         No: {
             value: 8,
-            cssclass: '',
+            cssclass: 'btn-warning',
             icon: null,
             action: 'no',
             text: null
         },
-        Close:  {
+        Close: {
             value: 16,
-            cssclass: '',
+            cssclass: 'btn-primary',
             icon: null,
             action: 'close',
             text: null
         },
-        Save:  {
+        Save: {
             value: 32,
-            cssclass: '',
+            cssclass: 'btn-primary',
             icon: null,
             action: 'save',
             text: null
         },
-        Delete:  {
+        Delete: {
             value: 64,
-            cssclass: '',
+            cssclass: 'btn-danger',
             icon: null,
             action: 'delete',
             text: null
         },
         Confirm: {
             value: 128,
-            cssclass: '',
+            cssclass: 'btn-primary',
             icon: null,
             action: 'confirm',
             text: null
         }
     },
     BoxDefaults = {
-        holderTemplate: '<div class="modal hide"></div>',
+        holderTemplate: '<div class="modal fade" role="dialog" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"></div></div></div>',
         headerTemplate: '<div class="modal-header"></div>',
+        bodyTemplate: '<div class="modal-body"></div>',
         footerTemplate: '<div class="modal-footer"></div>',
         buttonTemplate: '<button type="button" class="btn"/>',
         icon: null,
@@ -101,7 +98,13 @@
         icon: 'icon-exclamation-sign',
         buttons: buttons.Ok.value,
         autoDestroy: true
-    });
+    }),
+        FSBoxDefaults = $.extend({}, BoxDefaults, {
+            showX: false,
+            backdrop: 'static',
+            holdercss: 'model-fullscreen',
+            buttons: 16
+        });
 
     buttons.OkCancel = [buttons.Ok, buttons.Cancel];
     buttons.YesNo = [buttons.Yes, buttons.No];
@@ -118,7 +121,7 @@
 
     function getArgumentsArray() {
         var id = null, title, message, options;
-        
+
         switch (arguments.length) {
             case 1:
                 options = arguments[0];
@@ -163,17 +166,17 @@
         this.el.modal({
             keyboard: false,
             show: this.options.show,
-            backdrop : this.options.backdrop
-        }).on('shown', function () {
+            backdrop: this.options.backdrop
+        }).on('shown.bs.modal', function () {
             this.runHandler(this.handlers.shown, 'shown');
         }.bind(this))
-        .on('hidden', function () {
+        .on('hidden.bs.modal', function () {
             this.runHandler(this.handlers.hidden, 'hidden');
             if (this.options.autoDestroy) {
                 this.destroy();
             }
         }.bind(this));
-        
+
         return this;
     }
 
@@ -187,16 +190,18 @@
         _destroyed: false,
         _CheckCreated: function () {
             if (this.el === null || this.el === undefined) {
-                this.el = $(this.options.holderTemplate)
+                this.el = $(this.options.holderTemplate);
+                this.el.find('div.modal-content')
                     .append(this.header = $(this.options.headerTemplate))
-                    .append(this.body = $('<div class="modal-body box-area"></div>'))
+                    .append(this.body = $(this.options.bodyTemplate))
                     .append(this.footer = $(this.options.footerTemplate));
 
+                //console.log('Dialog#Create',this.el);
                 this.el.attr('id', this.id);
 
                 this._createHeader(this.options.showX);
 
-                $(doc.body).append(this.el);
+                //$(doc.body).append(this.el);
             }
             return this;
         },
@@ -217,19 +222,31 @@
             delete this.options.handlers;
             this._CheckCreated();
             if (this.options.animate) { this.el.addClass('fade'); }
-            else { this.el.removeClass('fade');}
+            else { this.el.removeClass('fade'); }
+            if (typeof this.options.cssclass === 'string') { this.el.addClass(this.options.cssclass); }
+            if (this.options.dialogcss) { this.body.addClass(this.options.dialogcss); }
+            if (this.options.holdercss) { this.el.find('div.modal-dialog').addClass(this.options.holdercss); }
+            
             return this
                 .hasHeader(this.options.header)
                 .hasFooter(this.options.footer)
                 .withButtons(this.options.buttons);
         },
+        on: function (name, ev) {
+            var handler = this.handlers[name];
+            if (handler === null || handler === undefined) handler = (this.handlers[name] = []);
+            handler.push(ev);
+
+            return this;
+        },
         buttonMatchesFlag: function (itm, flag) {
-            return itm.value & flag === itm.value;
+            /*jslint bitwise: true */
+            return (itm.value & flag) === itm.value;
         },
         getButtonMatchFromArray: function (items, btn) {
-            var a = [], i=0, len = items.length;
+            var a = [], i = 0, len = items.length;
             for (i; i < len; i = (i + 1)) {
-                if (this.buttonMatchesFlag(items[i], btn)) { a.push(items[i]);}
+                if (this.buttonMatchesFlag(items[i], btn)) { a.push(items[i]); }
             }
             return a;
         },
@@ -241,7 +258,7 @@
                     if (isKind(itm, 'Array')) {
                         a.concat(this.getButtonMatchFromArray(itm, btn));
                     } else {
-                        if (this.buttonMatchesFlag(itm, btn)) { a.push(itm);}
+                        if (this.buttonMatchesFlag(itm, btn)) { a.push(itm); }
                     }
                 }
             }
@@ -254,7 +271,7 @@
         },
         _createButtons: function (holder, items) {
             var i = 0, len = items.length;
-            for (i; i < len; i = (i + 1)) {
+            for (; i < len; i = (i + 1)) {
                 holder.append(this._createButton(items[i]));
             }
             holder.bind('click', 'button', function (e) {
@@ -263,22 +280,21 @@
                 if (cb) {
                     hideMe = this.runHandler(cb, action);
                 } else { hideMe = true; }
-                if (hideMe) { this.hide();}
+                if (hideMe) { this.hide(); }
             }.bind(this));
         },
         _createButton: function (itm) {
             var btn = $(this.options.buttonTemplate);
-            btn.html(itm.Text || itm.action);
+            btn.html(itm.text || capitaliseFirstLetter(itm.action));
             btn.attr('data-action', itm.action);
             if (itm.cssclass) { btn.addClass(itm.cssclass); }
             if (itm.icon) { btn.append(this._createIcon(itm.icon)); }
             return btn;
         },
         _createIcon: function (icon) {
-            return $('<i class="'+icon+'"></i>');
+            return $('<i class="' + icon + '"></i>');
         },
-        runHandler: function (value, action)
-        {
+        runHandler: function (value, action) {
             var returnValue = false, i = 0, len;
             if (!value) { return returnValue; }
             len = value.length;
@@ -291,8 +307,8 @@
         withButtons: function (btn) {
             var holder = this.footer;
             holder.empty();
-            if (buttons === 0) { return this.hasFooter(false);}
-            
+            if (buttons === 0) { return this.hasFooter(false); }
+
             if (typeof btn === 'number') {
                 this._createButtons(holder, this._getButtonsByNumber(btn));
             } else {
@@ -302,7 +318,12 @@
             return this;
         },
         withBody: function (str) {
-            this.body.html(getString(str));
+            if (typeof str === 'string') {
+                this.body.html(getString(str));
+            } else {
+                this.body.empty();
+                this.body.append(str);
+            }
             return this;
         },
         withTitle: function (str, options) {
@@ -314,7 +335,7 @@
                 }
             }
             if (this.options.icon) { holder.find('i').attr('class', this.options.icon).show(); }
-            else { holder.find('i').hide();}
+            else { holder.find('i').hide(); }
             return this;
         },
         hasHeader: function (show) {
@@ -340,6 +361,10 @@
         destroy: function () {
             this.hide();
             if (this._destroyed) { return; }
+
+            this.runHandler(this.handlers.destroy, 'destroy');
+            //setTimeout(function () { this.runHandler('destroy'); }.bind(this), 1);
+
             this.el.data('modal', null);
             this.el.empty().remove();
             this.header = null;
@@ -349,12 +374,14 @@
             this._destroyed = true;
             currentBoxes[this._id] = null;
             delete currentBoxes[this._id];
+            //console.log('Dialog#Destroy');
         }
     };
 
-    var BoxHandler = function () {};
+    //var BoxHandler = function () { };
 
-    BoxHandler.prototype = {
+    //BoxHandler.prototype = {
+    var BoxHandler = {
         _reg: function (itm) {
             currentBoxes[itm._id] = itm;
         },
@@ -379,8 +406,30 @@
             } else {
                 itm = this._dialognoObjCreate(arguments);
             }
-            
+
             this._reg(itm);
+            return itm;
+        },
+        fs: function () {
+            var _args = getArgumentsArray.apply(null, arguments),
+                itm = null,
+                sizeF = null;
+
+            _args[3] = $.extend({}, FSBoxDefaults, _args[3]);
+            sizeF = _args[3].sizeF || function () {
+                var headHeight = itm.options.header ? itm.header.outerHeight() : 0,
+                    footHeight = itm.options.footer ? itm.footer.outerHeight() : 0,
+                    mainHeight = itm.el.find('.modal-content').outerHeight();
+
+                itm.body.css('height', (mainHeight - (headHeight + footHeight)) + 'px');
+            };
+
+            itm = BoxHandler.dialog.apply(this, _args);
+            
+            $(global).on('resize', sizeF);
+            itm.on('shown', sizeF);
+            itm.on('destroy', function () { $(global).off('resize', sizeF); });
+
             return itm;
         },
         dialogObjCreate: function (val) {
@@ -397,8 +446,8 @@
     };
 
     /*jshint sub:true */
-    window["elimbox"] = Box;
-    window["elimboxes"] = new BoxHandler();
-    window["elimboxes"]["buttons"] = buttons;
+    global["elimbox"] = Box;
+    global["elimboxes"] = BoxHandler;
+    global["elimboxes"]["buttons"] = buttons;
 
-})(document, window.jQuery);
+})(this, this.$);
