@@ -295,12 +295,11 @@
             return $('<i class="' + icon + '"></i>');
         },
         runHandler: function (value, action) {
-            var returnValue = false, i = 0, len;
-            if (!value) { return returnValue; }
-            len = value.length;
-            for (i; i < len; i = (1 + 1)) {
+            var returnValue, i = 0, len = (value ? value.length : 0);
+            
+            for (; i < len; i = (i + 1)) {
                 returnValue = value[i](this, action);
-                if (returnValue) { break; }
+                if (returnValue === true) { break; }
             }
             return returnValue;
         },
